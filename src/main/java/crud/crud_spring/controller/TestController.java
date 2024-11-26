@@ -2,11 +2,14 @@ package crud.crud_spring.controller;
 
 import crud.crud_spring.entity.Board;
 import crud.crud_spring.service.BoardService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +22,7 @@ import java.io.IOException;
 
 
 @Controller
+@RequiredArgsConstructor
 public class TestController {
 
     @Autowired
@@ -30,7 +34,8 @@ public class TestController {
     }
 
     @PostMapping("/test/write")
-    public String testWrite(Board board, Model model, @RequestParam(value = "file", required = false) MultipartFile file) throws IOException {
+    public String testWrite(Board board, Model model,
+                            @RequestParam(value = "file", required = false) MultipartFile file) throws Exception {
 
         boardService.write(board, file);
 
@@ -83,7 +88,7 @@ public class TestController {
     }
 
     @PostMapping("/test/update/{id}")
-    public String testUpdate(@PathVariable("id") Integer id, Board board, Model model,@RequestParam(name="file", required = false) MultipartFile file) throws IOException {
+    public String testUpdate(@PathVariable("id") Integer id, Board board, Model model,@RequestParam(name="file", required = false) MultipartFile file) throws Exception {
         Board temp = boardService.boardView(id);
         //아래와 같이 덮어씌우기 방식은 jpa에서 사용하면 안된다.
         //jpa 변경감지 기능을 사용해야 한다.
@@ -100,4 +105,11 @@ public class TestController {
         return "message";
     }
 
+    @PostMapping("/test/login/validate")
+    public ResponseEntity<String> validate(@RequestParam(name = "user_id") String user_id, @RequestParam(name = "randomKey") String randomKey){
+        boolean validate = boardService.validateUser(user_id,randomKey);
+        if(!validate) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("사용자 인증 실패");
+
+        return ResponseEntity.ok("게시글 작성이 가능합니다.");
+    }
 }
