@@ -18,11 +18,10 @@ services:
       - "13306:3306"
     volumes:
       - ./mariadb_board_data:/var/lib/mysql
+    networks: # 네트워크 설정
+      - crud-network
 
   springboot-app:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
     image: highqualitycoffee/seq_board_spring:latest
     container_name: springboot-app
     environment:
@@ -33,7 +32,28 @@ services:
       - "8081:8080"
     depends_on:
       - mariadb
+    networks: # 네트워크 설정
+      - crud-network # `mariadb`와 동일한 네트워크에 연결
+
+  phpmyadmin: # phpMyAdmin 서비스 정의
+    image: phpmyadmin/phpmyadmin:latest # 최신 버전의 phpMyAdmin 이미지 사용
+    container_name: crud-phpmyadmin # phpMyAdmin 컨테이너 이름 설정
+    environment: # phpMyAdmin 설정을 위한 환경 변수
+      PMA_HOST: mariadb # phpMyAdmin이 연결할 데이터베이스 서비스 이름 (위의 `mariadb` 서비스와 연결)
+      PMA_USER: root # phpMyAdmin에서 사용할 데이터베이스 사용자
+      PMA_PASSWORD: 7228 # 데이터베이스 사용자 비밀번호
+    ports: # 포트 설정으로 호스트와 컨테이너 간 연결
+      - "8083:80" # 호스트의 8080 포트를 phpMyAdmin의 80 포트에 매핑
+    depends_on: # 컨테이너 실행 순서를 정의
+      - mariadb # phpMyAdmin이 `mariadb` 컨테이너가 준비된 후에 실행되도록 설정
+    networks: # 네트워크 설정
+      - crud-network # `mariadb`와 동일한 네트워크에 연결
+    restart: always # 컨테이너가 중단되었을 때 자동으로 재시작
 
 volumes:
-  mariadb_data:
+  mariadb_board_data:
+
+networks:
+  crud-network: # 사용자 정의 네트워크를 생성
+    driver: bridge # 브리지 네트워크 드라이버를 사용하여 동일 네트워크 상에서 통신 가능
 
